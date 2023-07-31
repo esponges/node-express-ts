@@ -1,15 +1,10 @@
 import express, { Express, Request, Response } from "express";
+import router from "./routes";
 const port = 8000;
 
 const app: Express = express();
 
-app.get("/", (req: Request, res: Response) => {
-  res.send("HELLO FROM EXPRESS + TS!!!! LOL");
-});
-
-app.get("/hi", (req: Request, res: Response) => {
-  res.send("BYEEE!!");
-});
+app.use('/api', router);
 
 app.listen(port, () => {
   console.log(`now listening on port ${port}`);
