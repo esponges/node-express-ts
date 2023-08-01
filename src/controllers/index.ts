@@ -1,4 +1,5 @@
-/*  This folder would contain your controller code. Controllers are responsible for handling requests from the client and returning responses. */
+/*  This folder would contain your controller code. 
+Controllers are responsible for handling requests from the client and returning responses. */
 
 /* Here lies the logic from the routes */
 
