@@ -1,10 +1,11 @@
 import express from 'express';
+import ChatController from '../../controllers/chat';
 
 const router = express.Router();
 
-router.get('/', (req, res) => {
-  // next: implement logic from controller
-  res.send('here the chat');
-});
+// create singleton instance of ChatController
+const chatInstance = ChatController.getInstance();
+
+router.get('/', chatInstance.conversationalChat);
 
 export default router;
