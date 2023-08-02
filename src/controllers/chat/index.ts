@@ -1,21 +1,20 @@
 import type { Response } from 'express';
 import { eq } from 'drizzle-orm';
-import { Client } from 'pg';
-import { drizzle } from 'drizzle-orm/node-postgres';
 
-import schema from '../../models/docs';
-
-import type { ConversationChatRequest, Doc } from '../../types';
-import { getErrorMessage } from '../../utils';
-
-// todo: this should in the root of the project
-import type { VectorStore } from 'langchain/dist/vectorstores/base';
 import { OpenAI } from "langchain";
 import { HNSWLib } from "langchain/vectorstores/hnswlib";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { ConversationalRetrievalQAChain } from "langchain/chains";
 import { Document } from 'langchain/document';
 
+import type { ConversationChatRequest, Doc } from '../../types';
+import type { VectorStore } from 'langchain/dist/vectorstores/base';
+
+import { getErrorMessage } from '../../utils';
+import schema from '../../models/docs';
+import { drizzleDb } from '../../models/drizzle';
+
+// todo: this should in the root of the project
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -61,31 +60,6 @@ class ChatController {
 }
 
 export default ChatController;
-
-if (
-  !process.env.DOCUMENTS_DB_URL ||
-  !process.env.DATABASE_URL ||
-  !process.env.DB_CONTEXT_DOCUMENT
-) {
-  throw new Error('DB_URL is not set');
-}
-
-const client = new Client({
-  connectionString: process.env.DOCUMENTS_DB_URL,
-});
-
-const connect = async () => {
-  try {
-    await client.connect();
-  } catch (error) {
-    const errorMessage = getErrorMessage(error);
-    throw new Error(`error initializing docs db: ${errorMessage}`);
-  }
-};
-
-connect();
-
-export const drizzleDb = drizzle(client, { schema });
 
 async function getExistingDocs(fileName: string): Promise<Doc[] | []> {
   console.log('fileName', fileName);
