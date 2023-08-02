@@ -11,7 +11,10 @@ import { getErrorMessage } from '../../utils';
 // todo: this should in the root of the project
 import type { VectorStore } from 'langchain/dist/vectorstores/base';
 import { OpenAI } from "langchain";
+import { HNSWLib } from "langchain/vectorstores/hnswlib";
+import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { ConversationalRetrievalQAChain } from "langchain/chains";
+import { Document } from 'langchain/document';
 
 import dotenv from 'dotenv';
 dotenv.config();
@@ -30,13 +33,30 @@ class ChatController {
 
   async conversationalChat(req: ConversationChatRequest, res: Response) {
     const { body } = req;
+    const { history, question } = body;
 
     // Get all users from the database.
-    const existingDocs = await getExistingDocs(
-      process.env.DB_CONTEXT_DOCUMENT || ''
-    );
+    try {
+      const store = await getVectorStore();
+      const chain = await getChain(store);
 
-    res.json(existingDocs);
+      const chatHistoryAsString = history.map((msg) => msg.join("\n")).join("\n");
+
+      const response = await chain.call({
+        question: question,
+        // not working?
+        // apparently fixed here https://github.com/nearform/langchainjs/commit/a8be68df562c7e7d2bfce5a9b2fa933a06bf616f
+        // also works on scripts/chain.ts but not here, why?
+        chat_history: chatHistoryAsString,
+      });
+      
+      res.json(response);
+    } catch (error) {
+      const msg = getErrorMessage(error);
+
+      res.status(500).json({ error: msg });
+    }
+
   }
 }
 
@@ -110,4 +130,31 @@ async function getChain(vectorStore: VectorStore) {
       questionGeneratorChainOptions: { template: CHAIN_PROMPT },
     }
   );
+}
+
+async function getVectorStore() {
+  if (!process.env.DB_CONTEXT_DOCUMENT) {
+    throw new Error("DB_CONTEXT_DOCUMENT is not set");
+  }
+
+  const docs = await getExistingDocs(process.env.DB_CONTEXT_DOCUMENT);
+
+  if (!docs[0]?.docs.length) {
+    throw new Error("An error occurred while fetching documents");
+  }
+
+  const documents = docs[0].docs.map(
+    (doc) =>
+      new Document<Doc>({
+        metadata: JSON.parse(doc.metadata as string),
+        pageContent: doc.pageContent as string,
+      })
+  );
+
+  // const texts = docs[0].docs.map((doc) => doc.pageContent as string);
+  // const textsMetas = docs[0].docs.map((doc) => !!doc?.metadata ? JSON.parse(doc.metadata ) : {});
+  // const HNSWStore = await HNSWLib.fromTexts(texts, textsMetas, new OpenAIEmbeddings());
+  const HNSWStore = await HNSWLib.fromDocuments(documents, new OpenAIEmbeddings());
+
+  return HNSWStore;
 }
