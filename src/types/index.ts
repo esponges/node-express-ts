@@ -1,4 +1,5 @@
 import type { Document } from 'langchain/document';
+import type { Request } from 'express';
 
 export type Doc = {
   id: string;
@@ -34,4 +35,11 @@ export type ApiChatResponse = ApiChatResponseBody | { error: string, status: num
 export type ErrorWithMessage = {
   message: string;
 };
+
+export interface ConversationChatRequest extends Request {
+  body: {
+    question: string;
+    history: Array<Array<string>>
+  }
+}
 
