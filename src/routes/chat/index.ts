@@ -6,6 +6,6 @@ const router = express.Router();
 // create singleton instance of ChatController
 const chatInstance = ChatController.getInstance();
 
-router.get('/', chatInstance.conversationalChat);
+router.post('/', chatInstance.conversationalChat);
 
 export default router;

@@ -6,6 +6,8 @@ import router from "./routes";
 const app: Express = express();
 const port = 8000;
 
+// parse application/json
+app.use(express.json());
 app.use('/api', router);
 
 app.listen(port, () => {
