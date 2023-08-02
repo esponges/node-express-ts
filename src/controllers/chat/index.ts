@@ -26,13 +26,15 @@ class ChatController {
 
   async conversationalChat(req: Request, res: Response) {
     // Get all users from the database.
-    res.send('here the chat');
+    const existingDocs = await getExistingDocs(process.env.DB_CONTEXT_DOCUMENT || '');
+
+    res.json(existingDocs);
   }
 }
 
 export default ChatController;
 
-if (!process.env.DOCUMENTS_DB_URL) {
+if (!process.env.DOCUMENTS_DB_URL || !process.env.DATABASE_URL || !process.env.DB_CONTEXT_DOCUMENT) {
   throw new Error("DB_URL is not set");
 }
 
@@ -54,6 +56,8 @@ connect();
 export const drizzleDb = drizzle(client, { schema });
 
 async function getExistingDocs (fileName: string): Promise<Doc[] | []> {
+  console.log('fileName', fileName);
+
   const document = await drizzleDb.query.langChainDocs.findMany({
     where: eq(schema.langChainDocs.name, fileName),
     with: {
